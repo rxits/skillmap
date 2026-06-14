@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink-900: #070912;
+  --ink-800: #0b0f1d;
+  --ink-700: #10162a;
+  --signal: #f5b94d;
+  --mastered: #5ee0c8;
+  --locked: #3b4566;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body {
+  background-color: var(--ink-900);
+  color: #e7ecf5;
+  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  min-height: 100dvh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Deep-space atmosphere: layered radial glows behind everything. */
+.observatory-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 75% 18%, rgba(245, 185, 77, 0.10), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 12% 82%, rgba(94, 224, 200, 0.08), transparent 60%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, #0b1024 0%, #070912 70%);
+  pointer-events: none;
+}
+
+/* Faint star field. */
+.starfield::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.6), transparent),
+    radial-gradient(1px 1px at 70% 65%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 85% 20%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1px 1px at 55% 12%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 10% 55%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 90% 88%, rgba(255, 255, 255, 0.4), transparent);
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Film grain overlay for texture. */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.font-display {
+  font-family: "Fraunces", Georgia, serif;
+}
+.font-mono {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Eyebrow / kicker label */
+.kicker {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  font-size: 0.66rem;
+}
+
+/* Custom scrollbar inside panels */
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 185, 77, 0.25);
+  border-radius: 99px;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.55; }
+  70% { transform: scale(2.2); opacity: 0; }
+  100% { opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.6s ease-out infinite;
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.dash-flow {
+  stroke-dasharray: 4 8;
+  animation: dash 1.2s linear infinite;
+}
+@keyframes dash {
+  to { stroke-dashoffset: -12; }
+}
+
+::selection {
+  background: rgba(245, 185, 77, 0.3);
+  color: #fff;
+}
