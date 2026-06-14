@@ -1,6 +1,6 @@
 "use client";
 
-import { NODE_BY_ID, NODES } from "./content";
+import { CHILD_NODES, NODE_BY_ID, NODES } from "./content";
 import { NodeState } from "./types";
 
 const KEY = "skillmap.progress.v1";
@@ -36,9 +36,11 @@ export function stateFor(nodeId: string, mastered: Set<string>): NodeState {
   return unlocked ? "available" : "locked";
 }
 
-/** XP model: each mastered (authored) node is worth 100 XP. */
+/** XP model: 100 XP per mastered main node, 50 XP per mastered deep-dive child. */
 export function xpFor(mastered: Set<string>): number {
-  return NODES.filter((n) => !n.comingSoon && mastered.has(n.id)).length * 100;
+  const main = NODES.filter((n) => !n.comingSoon && mastered.has(n.id)).length * 100;
+  const deep = CHILD_NODES.filter((n) => !n.comingSoon && mastered.has(n.id)).length * 50;
+  return main + deep;
 }
 
 export const TOTAL_AUTHORED = NODES.filter((n) => !n.comingSoon).length;

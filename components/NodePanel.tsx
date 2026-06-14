@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { SkillNode, NodeState } from "@/lib/types";
-import { NODE_BY_ID } from "@/lib/content";
+import { NODE_BY_ID, childrenOf } from "@/lib/content";
 import { Visual } from "./visuals";
 
 export default function NodePanel({
@@ -47,7 +47,11 @@ export default function NodePanel({
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="kicker text-signal mb-2">
-                    {state === "mastered" ? "✓ mastered" : "node"}
+                    {state === "mastered"
+                      ? "✓ mastered"
+                      : node.parent
+                        ? `deep dive · ${NODE_BY_ID[node.parent]?.title ?? "node"}`
+                        : "node"}
                   </div>
                   <h2 className="font-display text-3xl md:text-4xl leading-tight">
                     {node.title}
@@ -116,22 +120,59 @@ export default function NodePanel({
                 </div>
               )}
 
-              {/* deeper teaser */}
-              {node.deeper && node.deeper.length > 0 && (
-                <div className="mt-7">
-                  <div className="kicker text-white/35 mb-2">go deeper (coming soon)</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {node.deeper.map((d) => (
-                      <span
-                        key={d}
-                        className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-white/5 text-white/35"
-                      >
-                        {d}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* go deeper — real nested child nodes (zoom in) */}
+              {(() => {
+                const kids = childrenOf(node.id);
+                if (kids.length > 0) {
+                  return (
+                    <div className="mt-7">
+                      <div className="kicker text-white/35 mb-3">go deeper — zoom in</div>
+                      <div className="grid sm:grid-cols-2 gap-2">
+                        {kids.map((kid) => {
+                          const live = !kid.comingSoon;
+                          return (
+                            <button
+                              key={kid.id}
+                              onClick={() => live && onJump(kid.id)}
+                              disabled={!live}
+                              className={`text-left rounded-xl border px-3.5 py-3 transition ${
+                                live
+                                  ? "border-white/12 bg-white/[0.03] hover:border-signal/50 hover:bg-signal/[0.05] cursor-pointer"
+                                  : "border-white/8 bg-white/[0.02] opacity-50 cursor-not-allowed"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-white/85">{kid.title}</span>
+                                <span className="font-mono text-[10px] text-white/35">
+                                  {live ? "+50 xp →" : "soon"}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+                if (node.deeper && node.deeper.length > 0) {
+                  return (
+                    <div className="mt-7">
+                      <div className="kicker text-white/35 mb-2">go deeper (coming soon)</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {node.deeper.map((d) => (
+                          <span
+                            key={d}
+                            className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-white/5 text-white/35"
+                          >
+                            {d}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* 5. unlock */}
               <div className="mt-8 pt-6 border-t border-white/10">

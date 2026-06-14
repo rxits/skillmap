@@ -6,6 +6,7 @@ export type VisualKind =
   | "retrieval-rank"
   | "rag-pipeline"
   | "agent-loop"
+  | "chunking"
   | "none";
 
 export interface BuildStep {
@@ -44,4 +45,6 @@ export interface SkillNode {
   y: number;
   /** true for nodes that are visible but not yet authored (greyed stars) */
   comingSoon?: boolean;
+  /** if set, this is a "go deeper" child node nested under a parent node */
+  parent?: string;
 }

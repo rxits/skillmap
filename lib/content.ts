@@ -118,9 +118,68 @@ export const NODES: SkillNode[] = [
   { id: "guardrails", title: "Guardrails", hook: "", blurb: "", visual: "none", prereqs: ["agents"], related: [], build: { prompt: "", done: "" }, x: 96, y: 56, comingSoon: true },
 ];
 
+/**
+ * "Go deeper" child nodes. These never appear as stars on the main constellation —
+ * they're reached by zooming into a parent node's panel. Proves the depth-via-zoom
+ * model: the map is fractal, not five flat cards.
+ */
+export const CHILD_NODES: SkillNode[] = [
+  {
+    id: "chunking",
+    title: "Chunking Strategies",
+    hook: "How you slice your docs decides what the AI can ever find. It's the quietest make-or-break in RAG.",
+    blurb:
+      "Before anything gets embedded, your documents are split into chunks — and each chunk becomes one searchable unit. Split too coarsely and a single chunk mixes unrelated ideas, so retrieval drags in noise. Split too finely and chunks lose the context that made them meaningful. Splitting on natural boundaries (sentences, paragraphs) usually beats blind fixed-size windows.",
+    visual: "chunking",
+    prereqs: [],
+    parent: "rag",
+    related: [{ to: "rag", relation: "part of" }],
+    build: {
+      prompt:
+        "Switch between fixed-size and by-sentence splitting, and drag the chunk size. Watch how the same doc becomes a totally different set of searchable units.",
+      done: "You felt the trade-off: chunk boundaries shape everything downstream.",
+    },
+    x: 0,
+    y: 0,
+  },
+  {
+    id: "reranking",
+    title: "Re-ranking",
+    hook: "",
+    blurb: "",
+    visual: "none",
+    prereqs: [],
+    parent: "rag",
+    related: [{ to: "rag", relation: "part of" }],
+    build: { prompt: "", done: "" },
+    x: 0,
+    y: 0,
+    comingSoon: true,
+  },
+  {
+    id: "hybrid-search",
+    title: "Hybrid Search",
+    hook: "",
+    blurb: "",
+    visual: "none",
+    prereqs: [],
+    parent: "rag",
+    related: [{ to: "rag", relation: "part of" }],
+    build: { prompt: "", done: "" },
+    x: 0,
+    y: 0,
+    comingSoon: true,
+  },
+];
+
 export const NODE_BY_ID: Record<string, SkillNode> = Object.fromEntries(
-  NODES.map((n) => [n.id, n])
+  [...NODES, ...CHILD_NODES].map((n) => [n.id, n])
 );
+
+/** Children nested under a given parent node, in declaration order. */
+export function childrenOf(parentId: string): SkillNode[] {
+  return CHILD_NODES.filter((c) => c.parent === parentId);
+}
 
 /** Edges to draw on the constellation, derived from prereqs. */
 export const EDGES: Array<{ from: string; to: string }> = NODES.flatMap((n) =>
