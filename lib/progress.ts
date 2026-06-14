@@ -44,3 +44,40 @@ export function xpFor(mastered: Set<string>): number {
 }
 
 export const TOTAL_AUTHORED = NODES.filter((n) => !n.comingSoon).length;
+
+/** Level ladder — XP thresholds with a playful title + emoji. */
+export const LEVELS: { at: number; title: string; emoji: string }[] = [
+  { at: 0, title: "Curious", emoji: "🌱" },
+  { at: 100, title: "Tinkerer", emoji: "🔧" },
+  { at: 250, title: "Builder", emoji: "🛠️" },
+  { at: 450, title: "Shipper", emoji: "🚀" },
+  { at: 700, title: "Architect", emoji: "🏛️" },
+  { at: 1000, title: "Wizard", emoji: "🧙" },
+];
+
+export interface LevelInfo {
+  index: number;
+  title: string;
+  emoji: string;
+  current: number; // xp at start of this level
+  next: number | null; // xp needed for next level, or null if maxed
+  progress: number; // 0..1 toward next level
+}
+
+export function levelFor(xp: number): LevelInfo {
+  let idx = 0;
+  for (let i = 0; i < LEVELS.length; i++) {
+    if (xp >= LEVELS[i].at) idx = i;
+  }
+  const cur = LEVELS[idx];
+  const nxt = LEVELS[idx + 1] ?? null;
+  const progress = nxt ? (xp - cur.at) / (nxt.at - cur.at) : 1;
+  return {
+    index: idx,
+    title: cur.title,
+    emoji: cur.emoji,
+    current: cur.at,
+    next: nxt ? nxt.at : null,
+    progress: Math.max(0, Math.min(1, progress)),
+  };
+}

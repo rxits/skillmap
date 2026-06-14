@@ -2,9 +2,23 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { SkillNode, NodeState } from "@/lib/types";
+import { SkillNode, NodeState, RefKind } from "@/lib/types";
 import { NODE_BY_ID, childrenOf } from "@/lib/content";
 import { Visual } from "./visuals";
+
+const REF_ICON: Record<RefKind, string> = {
+  video: "🎬",
+  docs: "📄",
+  article: "📰",
+  repo: "🐙",
+  paper: "📜",
+};
+
+const DIFF: Record<string, { label: string; cls: string }> = {
+  "warm-up": { label: "warm-up", cls: "text-mastered border-mastered/40 bg-mastered/10" },
+  real: { label: "real one", cls: "text-signal border-signal/40 bg-signal/10" },
+  spicy: { label: "spicy 🌶️", cls: "text-pink-300 border-pink-400/40 bg-pink-400/10" },
+};
 
 export default function NodePanel({
   node,
@@ -20,9 +34,11 @@ export default function NodePanel({
   onJump: (id: string) => void;
 }) {
   const [touched, setTouched] = useState(false);
+  const [nerd, setNerd] = useState(false);
 
   useEffect(() => {
     setTouched(false);
+    setNerd(false);
   }, [node?.id]);
 
   return (
@@ -41,21 +57,25 @@ export default function NodePanel({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 260, damping: 30 }}
-            className="fixed right-0 top-0 z-40 h-full w-[min(620px,100vw)] bg-ink-800/95 backdrop-blur-xl border-l border-white/10 overflow-y-auto thin-scroll"
+            className="fixed right-0 top-0 z-40 h-full w-[min(640px,100vw)] bg-ink-800/95 backdrop-blur-xl border-l border-white/10 overflow-y-auto thin-scroll"
           >
             <div className="p-6 md:p-8">
+              {/* header */}
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <div className="kicker text-signal mb-2">
-                    {state === "mastered"
-                      ? "✓ mastered"
-                      : node.parent
-                        ? `deep dive · ${NODE_BY_ID[node.parent]?.title ?? "node"}`
-                        : "node"}
+                <div className="flex items-start gap-3">
+                  <span className="text-4xl leading-none mt-0.5">{node.emoji ?? "✦"}</span>
+                  <div>
+                    <div className="kicker text-signal mb-1.5">
+                      {state === "mastered"
+                        ? "✓ mastered"
+                        : node.parent
+                          ? `deep dive · ${NODE_BY_ID[node.parent]?.title ?? "node"}`
+                          : "node"}
+                    </div>
+                    <h2 className="font-display text-3xl md:text-4xl leading-tight">
+                      {node.title}
+                    </h2>
                   </div>
-                  <h2 className="font-display text-3xl md:text-4xl leading-tight">
-                    {node.title}
-                  </h2>
                 </div>
                 <button
                   onClick={onClose}
@@ -65,38 +85,171 @@ export default function NodePanel({
                 </button>
               </div>
 
-              {/* 1. Hook */}
+              {/* hook — the fun, plain one-liner */}
               <p className="mt-5 text-lg md:text-xl text-signal-soft font-display leading-snug">
                 {node.hook}
               </p>
 
-              {/* 2. The visual */}
+              {/* play with it */}
               <div className="mt-7">
-                <div className="kicker text-white/35 mb-3">▸ see it move</div>
+                <div className="kicker text-white/35 mb-3">🎮 play with it</div>
                 <div
                   onPointerDown={() => setTouched(true)}
+                  onClick={() => setTouched(true)}
                   className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5"
                 >
                   <Visual kind={node.visual} />
                 </div>
               </div>
 
-              {/* the build prompt */}
               <div className="mt-4 rounded-xl bg-signal/[0.07] border border-signal/20 px-4 py-3">
-                <div className="kicker text-signal/80 mb-1">the build</div>
                 <p className="text-sm text-white/75 leading-relaxed">{node.build.prompt}</p>
               </div>
 
-              {/* 3. blurb */}
-              <div className="mt-7">
-                <div className="kicker text-white/35 mb-2">what's really going on</div>
-                <p className="text-[15px] text-white/70 leading-relaxed">{node.blurb}</p>
-              </div>
+              {/* your mission */}
+              {node.mission && (
+                <div className="mt-7">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="kicker text-white/35">🎯 your mission</div>
+                    <span
+                      className={`font-mono text-[10px] px-2 py-0.5 rounded-full border ${
+                        DIFF[node.mission.level]?.cls ?? ""
+                      }`}
+                    >
+                      {DIFF[node.mission.level]?.label ?? node.mission.level}
+                    </span>
+                  </div>
+                  <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-white/[0.05] to-transparent p-4">
+                    <p className="text-[15px] text-white/85 leading-relaxed">
+                      {node.mission.task}
+                    </p>
+                    {node.mission.repos.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <div className="kicker text-white/30">steal a starter</div>
+                        {node.mission.repos.map((r) => (
+                          <a
+                            key={r.url}
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group flex items-center gap-3 rounded-xl border border-white/10 bg-ink-900/50 px-3 py-2.5 hover:border-signal/50 hover:bg-signal/[0.05] transition"
+                          >
+                            <span className="text-lg">🐙</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-mono text-xs text-white/85 truncate">
+                                {r.label}
+                              </div>
+                              {r.note && (
+                                <div className="text-[11px] text-white/40 truncate">{r.note}</div>
+                              )}
+                            </div>
+                            <span className="font-mono text-[10px] text-white/30 group-hover:text-signal transition">
+                              open ↗
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
-              {/* 4. map-in */}
+              {/* go deeper — zoom in */}
+              {(() => {
+                const kids = childrenOf(node.id);
+                if (kids.length === 0) return null;
+                return (
+                  <div className="mt-7">
+                    <div className="kicker text-white/35 mb-3">🔍 go deeper — zoom in</div>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {kids.map((kid) => {
+                        const live = !kid.comingSoon;
+                        return (
+                          <button
+                            key={kid.id}
+                            onClick={() => live && onJump(kid.id)}
+                            disabled={!live}
+                            className={`text-left rounded-xl border px-3.5 py-3 transition ${
+                              live
+                                ? "border-white/12 bg-white/[0.03] hover:border-signal/50 hover:bg-signal/[0.05] cursor-pointer"
+                                : "border-white/8 bg-white/[0.02] opacity-50 cursor-not-allowed"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-white/85">
+                                {kid.emoji} {kid.title}
+                              </span>
+                              <span className="font-mono text-[10px] text-white/35">
+                                {live ? "+50 xp →" : "soon"}
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* nerd mode — the theory, hidden by default to keep it light */}
+              {node.blurb && (
+                <div className="mt-7">
+                  <button
+                    onClick={() => setNerd((n) => !n)}
+                    className="w-full flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3 hover:border-white/25 transition"
+                  >
+                    <span className="kicker text-white/55">🤓 nerd mode — what's really going on</span>
+                    <motion.span animate={{ rotate: nerd ? 180 : 0 }} className="text-white/40">
+                      ▾
+                    </motion.span>
+                  </button>
+                  <AnimatePresence initial={false}>
+                    {nerd && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-[15px] text-white/70 leading-relaxed px-1 pt-4">
+                          {node.blurb}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              {/* learn more */}
+              {node.references && node.references.length > 0 && (
+                <div className="mt-7">
+                  <div className="kicker text-white/35 mb-3">📚 learn more</div>
+                  <div className="space-y-1.5">
+                    {node.references.map((ref) => (
+                      <a
+                        key={ref.url}
+                        href={ref.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-white/[0.04] transition"
+                      >
+                        <span className="text-base">{REF_ICON[ref.kind]}</span>
+                        <span className="flex-1 text-sm text-white/70 group-hover:text-white transition">
+                          {ref.label}
+                        </span>
+                        <span className="font-mono text-[10px] text-white/25 group-hover:text-signal transition">
+                          ↗
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* map-in */}
               {node.related.length > 0 && (
                 <div className="mt-7">
-                  <div className="kicker text-white/35 mb-3">where this sits on the map</div>
+                  <div className="kicker text-white/35 mb-3">🧭 where this sits</div>
                   <div className="flex flex-wrap gap-2">
                     {node.related.map((r) => {
                       const target = NODE_BY_ID[r.to];
@@ -107,11 +260,9 @@ export default function NodePanel({
                           onClick={() => onJump(r.to)}
                           className="group flex items-center gap-2 rounded-full border border-white/12 bg-white/[0.03] pl-3 pr-1.5 py-1 hover:border-signal/50 transition"
                         >
-                          <span className="font-mono text-[10px] text-white/40">
-                            {r.relation}
-                          </span>
+                          <span className="font-mono text-[10px] text-white/40">{r.relation}</span>
                           <span className="rounded-full bg-white/8 px-2.5 py-1 text-xs text-white/80 group-hover:text-signal transition">
-                            {target.title} →
+                            {target.emoji} {target.title} →
                           </span>
                         </button>
                       );
@@ -120,61 +271,7 @@ export default function NodePanel({
                 </div>
               )}
 
-              {/* go deeper — real nested child nodes (zoom in) */}
-              {(() => {
-                const kids = childrenOf(node.id);
-                if (kids.length > 0) {
-                  return (
-                    <div className="mt-7">
-                      <div className="kicker text-white/35 mb-3">go deeper — zoom in</div>
-                      <div className="grid sm:grid-cols-2 gap-2">
-                        {kids.map((kid) => {
-                          const live = !kid.comingSoon;
-                          return (
-                            <button
-                              key={kid.id}
-                              onClick={() => live && onJump(kid.id)}
-                              disabled={!live}
-                              className={`text-left rounded-xl border px-3.5 py-3 transition ${
-                                live
-                                  ? "border-white/12 bg-white/[0.03] hover:border-signal/50 hover:bg-signal/[0.05] cursor-pointer"
-                                  : "border-white/8 bg-white/[0.02] opacity-50 cursor-not-allowed"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-white/85">{kid.title}</span>
-                                <span className="font-mono text-[10px] text-white/35">
-                                  {live ? "+50 xp →" : "soon"}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                }
-                if (node.deeper && node.deeper.length > 0) {
-                  return (
-                    <div className="mt-7">
-                      <div className="kicker text-white/35 mb-2">go deeper (coming soon)</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {node.deeper.map((d) => (
-                          <span
-                            key={d}
-                            className="font-mono text-[11px] px-2.5 py-1 rounded-md bg-white/5 text-white/35"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
-
-              {/* 5. unlock */}
+              {/* unlock */}
               <div className="mt-8 pt-6 border-t border-white/10">
                 {state === "mastered" ? (
                   <div className="flex items-center gap-2 text-mastered text-sm font-mono">
@@ -187,10 +284,10 @@ export default function NodePanel({
                       disabled={!touched}
                       className="w-full rounded-xl bg-signal text-ink-900 font-semibold py-3.5 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-glow transition"
                     >
-                      {touched ? "I get it — light up this node ✦" : "↑ try the visual first"}
+                      {touched ? "I get it — light it up ✦" : "↑ play with it first"}
                     </button>
                     <p className="mt-2 text-center text-[11px] text-white/30 font-mono">
-                      completing this unlocks the next stars on the map
+                      {node.parent ? "+50 xp · deep dive" : "lights this star + unlocks the next ones"}
                     </p>
                   </>
                 )}

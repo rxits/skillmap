@@ -1,0 +1,203 @@
+"use client";
+
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import MapCanvas from "@/components/MapCanvas";
+import NodePanel from "@/components/NodePanel";
+import Tutor from "@/components/Tutor";
+import Confetti from "@/components/Confetti";
+import { NODE_BY_ID, TRACK_BY_ID } from "@/lib/content";
+import {
+  loadProgress,
+  saveProgress,
+  stateFor,
+  xpFor,
+  levelFor,
+  TOTAL_AUTHORED,
+} from "@/lib/progress";
+
+export default function MapExperience({ trackId }: { trackId: string }) {
+  const track = TRACK_BY_ID[trackId];
+  const [mastered, setMastered] = useState<Set<string>>(new Set());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  const [confetti, setConfetti] = useState(0);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMastered(new Set(loadProgress().mastered));
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const stateOf = useCallback((id: string) => stateFor(id, mastered), [mastered]);
+
+  function master(id: string) {
+    const node = NODE_BY_ID[id];
+    const gain = node?.parent ? 50 : 100;
+    const before = levelFor(xpFor(mastered));
+    setMastered((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      saveProgress({ mastered: Array.from(next) });
+      const after = levelFor(xpFor(next));
+      if (after.index > before.index) {
+        setToast(`Level up! ${after.emoji} You're a ${after.title} now`);
+      } else {
+        setToast(`+${gain} XP ✦`);
+      }
+      return next;
+    });
+    setConfetti((c) => c + 1);
+  }
+
+  function reset() {
+    const empty = new Set<string>();
+    setMastered(empty);
+    saveProgress({ mastered: [] });
+    setActiveId(null);
+  }
+
+  const xp = useMemo(() => xpFor(mastered), [mastered]);
+  const level = useMemo(() => levelFor(xp), [xp]);
+  const doneCount = useMemo(
+    () =>
+      Array.from(mastered).filter((id) => NODE_BY_ID[id] && !NODE_BY_ID[id].comingSoon && !NODE_BY_ID[id].parent)
+        .length,
+    [mastered]
+  );
+
+  const activeNode = activeId ? NODE_BY_ID[activeId] : null;
+
+  return (
+    <main className="relative z-10 min-h-dvh px-5 md:px-10 pb-24">
+      <Confetti trigger={confetti} />
+
+      {/* xp / level-up toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.9 }}
+            className="fixed top-5 left-1/2 -translate-x-1/2 z-[70] rounded-full bg-signal text-ink-900 font-semibold px-5 py-2.5 shadow-glow font-display"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* top bar */}
+      <header className="flex items-center justify-between pt-7 max-w-6xl mx-auto gap-4">
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <span className="text-signal text-xl group-hover:scale-110 transition">✦</span>
+          <span className="font-display text-xl tracking-tight">SkillMap</span>
+          <span className="hidden sm:inline font-mono text-[10px] text-white/30 ml-1 group-hover:text-white/60 transition">
+            ← all tracks
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-4 md:gap-6">
+          {/* level */}
+          <div className="hidden sm:flex items-center gap-2.5">
+            <span className="text-xl">{level.emoji}</span>
+            <div className="w-28">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-white/55">{level.title}</span>
+                <span className="font-mono text-[10px] text-white/30">{xp} xp</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/8 overflow-hidden mt-1">
+                <motion.div
+                  className="h-full rounded-full bg-gradient-to-r from-signal-deep to-signal"
+                  animate={{ width: `${level.progress * 100}%` }}
+                  transition={{ type: "spring", stiffness: 200, damping: 24 }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="font-mono text-[10px] text-white/35 uppercase tracking-widest">mastered</div>
+            <div className="font-display text-lg leading-none">
+              {doneCount}
+              <span className="text-white/30">/{TOTAL_AUTHORED}</span>
+            </div>
+          </div>
+          {doneCount > 0 && (
+            <button
+              onClick={reset}
+              className="font-mono text-[10px] text-white/30 hover:text-white/70 border border-white/10 rounded-full px-2.5 py-1 transition"
+            >
+              reset
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* hero */}
+      <section className="max-w-3xl mx-auto text-center mt-10 md:mt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="kicker text-signal/80 mb-4"
+        >
+          {track ? `${track.emoji} ${track.name}` : "the map of ai engineering"}
+        </motion.div>
+        <motion.h1
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight"
+        >
+          Pick a star. <span className="text-signal">Light it up.</span>
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mt-4 text-white/55 text-base leading-relaxed max-w-xl mx-auto"
+        >
+          Click a concept, poke the visual until it clicks, grab the mission, then build.
+          No lectures. No 4-year detour.
+        </motion.p>
+      </section>
+
+      {/* the map */}
+      <section className="mt-8 md:mt-10">
+        {hydrated && (
+          <MapCanvas stateOf={stateOf} onSelect={setActiveId} activeId={activeId} />
+        )}
+      </section>
+
+      {/* legend */}
+      <div className="flex items-center justify-center gap-5 mt-6 font-mono text-[11px] text-white/45">
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-signal shadow-glow" /> available
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-mastered shadow-glow-cyan" /> mastered
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-locked" /> locked
+        </span>
+      </div>
+
+      <NodePanel
+        node={activeNode}
+        state={activeNode ? stateOf(activeNode.id) : "locked"}
+        onClose={() => setActiveId(null)}
+        onMaster={master}
+        onJump={(id) => {
+          if (stateOf(id) !== "locked") setActiveId(id);
+        }}
+      />
+
+      <Tutor node={activeNode} />
+    </main>
+  );
+}
