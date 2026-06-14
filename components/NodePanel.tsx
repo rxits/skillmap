@@ -60,35 +60,44 @@ export default function NodePanel({
             className="fixed right-0 top-0 z-40 h-full w-[min(640px,100vw)] bg-ink-800/95 backdrop-blur-xl border-l border-white/10 overflow-y-auto thin-scroll"
           >
             <div className="p-6 md:p-8">
-              {/* header */}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <span className="text-4xl leading-none mt-0.5">{node.emoji ?? "✦"}</span>
-                  <div>
-                    <div className="kicker text-signal mb-1.5">
-                      {state === "mastered"
-                        ? "✓ mastered"
-                        : node.parent
-                          ? `deep dive · ${NODE_BY_ID[node.parent]?.title ?? "node"}`
-                          : "node"}
-                    </div>
-                    <h2 className="font-display text-3xl md:text-4xl leading-tight">
-                      {node.title}
-                    </h2>
-                  </div>
-                </div>
+              {/* colorful banner header */}
+              <div
+                className="relative -mx-6 md:-mx-8 -mt-6 md:-mt-8 px-6 md:px-8 pt-9 pb-7 overflow-hidden"
+                style={{
+                  background: `radial-gradient(120% 140% at 0% 0%, ${
+                    node.accent ?? "#f5b94d"
+                  }38, transparent 65%)`,
+                }}
+              >
+                <span
+                  className="pointer-events-none absolute -right-2 -top-3 text-[130px] leading-none opacity-25 float-slow select-none"
+                  aria-hidden
+                >
+                  {node.emoji ?? "✦"}
+                </span>
                 <button
                   onClick={onClose}
-                  className="text-white/40 hover:text-white text-2xl leading-none shrink-0"
+                  className="absolute right-5 top-5 text-white/60 hover:text-white text-3xl leading-none"
                 >
                   ×
                 </button>
+                <div
+                  className="kicker mb-2.5"
+                  style={{ color: node.accent ?? "#f5b94d" }}
+                >
+                  {state === "mastered"
+                    ? "✓ mastered"
+                    : node.parent
+                      ? `deep dive · ${NODE_BY_ID[node.parent]?.title ?? "node"}`
+                      : "concept"}
+                </div>
+                <h2 className="relative font-display text-4xl md:text-5xl leading-[1.05]">
+                  {node.title}
+                </h2>
+                <p className="relative mt-4 text-xl md:text-2xl font-display leading-snug text-white/90 max-w-lg">
+                  {node.hook}
+                </p>
               </div>
-
-              {/* hook — the fun, plain one-liner */}
-              <p className="mt-5 text-lg md:text-xl text-signal-soft font-display leading-snug">
-                {node.hook}
-              </p>
 
               {/* play with it */}
               <div className="mt-7">
@@ -102,9 +111,28 @@ export default function NodePanel({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl bg-signal/[0.07] border border-signal/20 px-4 py-3">
-                <p className="text-sm text-white/75 leading-relaxed">{node.build.prompt}</p>
+              <div className="mt-4 rounded-xl bg-signal/[0.07] border border-signal/20 px-4 py-3.5">
+                <p className="text-base text-white/80 leading-relaxed">{node.build.prompt}</p>
               </div>
+
+              {/* watch — embedded video */}
+              {node.video && (
+                <div className="mt-7">
+                  <div className="kicker text-white/35 mb-3">🎬 watch (2 min in)</div>
+                  <div
+                    className="relative rounded-2xl overflow-hidden border aspect-video"
+                    style={{ borderColor: `${node.accent ?? "#f5b94d"}44` }}
+                  >
+                    <iframe
+                      className="absolute inset-0 w-full h-full"
+                      src={`https://www.youtube-nocookie.com/embed/${node.video}`}
+                      title={`${node.title} video`}
+                      allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* your mission */}
               {node.mission && (
@@ -119,8 +147,8 @@ export default function NodePanel({
                       {DIFF[node.mission.level]?.label ?? node.mission.level}
                     </span>
                   </div>
-                  <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-white/[0.05] to-transparent p-4">
-                    <p className="text-[15px] text-white/85 leading-relaxed">
+                  <div className="rounded-2xl border border-white/12 bg-gradient-to-br from-white/[0.05] to-transparent p-5">
+                    <p className="text-lg text-white/90 leading-relaxed">
                       {node.mission.task}
                     </p>
                     {node.mission.repos.length > 0 && (
@@ -211,7 +239,7 @@ export default function NodePanel({
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                       >
-                        <p className="text-[15px] text-white/70 leading-relaxed px-1 pt-4">
+                        <p className="text-base text-white/75 leading-relaxed px-1 pt-4">
                           {node.blurb}
                         </p>
                       </motion.div>

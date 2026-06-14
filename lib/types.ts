@@ -54,6 +54,10 @@ export interface SkillNode {
   title: string;
   /** a fun emoji that gives the node a face */
   emoji?: string;
+  /** per-node accent color (hex) used for its star, banner, and glow */
+  accent?: string;
+  /** optional YouTube video id embedded in the node panel */
+  video?: string;
   /** one-line, jargon-free "why this exists" */
   hook: string;
   /** longer context paragraph shown in the panel */

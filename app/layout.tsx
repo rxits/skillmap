@@ -22,7 +22,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="observatory-bg starfield grain">{children}</body>
+      <body>
+        <div className="bg-layer bg-base" />
+        <div className="bg-layer bg-aurora" />
+        <div className="bg-layer bg-stars" />
+        <div className="bg-layer bg-grain" />
+        {children}
+      </body>
     </html>
   );
 }

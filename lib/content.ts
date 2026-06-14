@@ -67,6 +67,8 @@ export const NODES: SkillNode[] = [
     id: "llm-basics",
     title: "LLM Basics",
     emoji: "🧠",
+    accent: "#f5b94d",
+    video: "zjkBMFhNj_g",
     hook: "An LLM is a next-word predictor that got so good at guessing it started to reason.",
     blurb:
       "A large language model reads everything before the cursor and assigns a probability to every possible next token. That's the whole trick. Scale that up across the internet and the 'best guess' becomes summarizing, translating, coding, arguing. You don't need to know how the math trains — you need to know it's a probability machine you steer with context.",
@@ -98,6 +100,7 @@ export const NODES: SkillNode[] = [
     id: "tokens-embeddings",
     title: "Tokens & Embeddings",
     emoji: "🧭",
+    accent: "#5ee0c8",
     hook: "Computers can't read words. Embeddings turn meaning into coordinates in space.",
     blurb:
       "Text is first chopped into tokens (chunks of characters), then each token is mapped to a long list of numbers — a vector — positioned so that things with similar meaning sit close together. 'King' lands near 'queen'; 'dog' lands near 'puppy'. Once meaning is geometry, you can measure it, search it, and cluster it.",
@@ -131,6 +134,7 @@ export const NODES: SkillNode[] = [
     id: "vector-dbs",
     title: "Vector DBs",
     emoji: "🗄️",
+    accent: "#7aa2ff",
     hook: "If meaning is coordinates, a vector DB is the map that finds the nearest neighbors fast.",
     blurb:
       "A vector database stores millions of embeddings and, given a query vector, returns the closest ones in milliseconds. It's the retrieval muscle: not 'find the row where id = 5' but 'find the 5 things most similar in meaning to this'. This is the piece that makes giving an AI a searchable memory practical at scale.",
@@ -165,6 +169,7 @@ export const NODES: SkillNode[] = [
     id: "rag",
     title: "RAG",
     emoji: "📚",
+    accent: "#f472b6",
     hook: "Your LLM doesn't know your docs. RAG gives it a memory it can look things up in.",
     blurb:
       "Retrieval-Augmented Generation is the assembly line: chunk your documents, embed them, store them. When a question arrives, embed it, retrieve the most relevant chunks, paste them into the prompt, and let the LLM answer using them. The model stays the same — you just hand it the right page open to the right paragraph at the right moment.",
@@ -200,6 +205,7 @@ export const NODES: SkillNode[] = [
     id: "agents",
     title: "Agents",
     emoji: "🤖",
+    accent: "#a78bfa",
     hook: "An agent is an LLM in a loop with tools — it can act, see the result, and try again.",
     blurb:
       "Instead of answering once, an agent thinks, picks a tool (search, code, an API), runs it, observes the result, and decides the next step — looping until the job is done. RAG gives a model knowledge; tools give it hands. The loop is the whole idea: reason, act, observe, repeat.",
@@ -245,6 +251,7 @@ export const CHILD_NODES: SkillNode[] = [
     id: "chunking",
     title: "Chunking Strategies",
     emoji: "🔪",
+    accent: "#34d399",
     hook: "How you slice your docs decides what the AI can ever find. It's the quietest make-or-break in RAG.",
     blurb:
       "Before anything gets embedded, your documents are split into chunks — and each chunk becomes one searchable unit. Split too coarsely and a single chunk mixes unrelated ideas, so retrieval drags in noise. Split too finely and chunks lose the context that made them meaningful. Splitting on natural boundaries (sentences, paragraphs) usually beats blind fixed-size windows.",
@@ -274,6 +281,7 @@ export const CHILD_NODES: SkillNode[] = [
     id: "reranking",
     title: "Re-ranking",
     emoji: "🏅",
+    accent: "#fb923c",
     hook: "First retrieval is fast but sloppy. A re-ranker reads each result properly and shoves the best one to the top.",
     blurb:
       "Vector search is quick but approximate — it can rank a so-so chunk above the perfect one. A re-ranker (a smarter, slower cross-encoder) re-scores the top candidates by actually comparing each one to the query, then reorders. The move: retrieve 20 cheaply, re-rank down to the best 3. Quality jumps, cost stays sane.",
@@ -303,6 +311,7 @@ export const CHILD_NODES: SkillNode[] = [
     id: "hybrid-search",
     title: "Hybrid Search",
     emoji: "🔀",
+    accent: "#38bdf8",
     hook: "Keyword search nails exact terms; semantic search gets meaning. Hybrid runs both so nothing slips through.",
     blurb:
       "Pure vector search can miss an exact code, name, or acronym; pure keyword search misses paraphrases. Hybrid search runs keyword (BM25) and semantic (vector) together and fuses the rankings — so a query like 'M1 battery' finds both the literal match and the doc that only says 'Apple Silicon power draw'.",

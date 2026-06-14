@@ -152,18 +152,18 @@ export default function MapExperience({ trackId }: { trackId: string }) {
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="font-display text-4xl md:text-5xl leading-[1.05] tracking-tight"
+          className="font-display text-5xl md:text-6xl leading-[1.02] tracking-tight"
         >
-          Pick a star. <span className="text-signal">Light it up.</span>
+          Pick a star. <span className="shimmer-text">Light it up.</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12 }}
-          className="mt-4 text-white/55 text-base leading-relaxed max-w-xl mx-auto"
+          className="mt-5 text-white/60 text-lg leading-relaxed max-w-xl mx-auto"
         >
           Click a concept, poke the visual until it clicks, grab the mission, then build.
-          No lectures. No 4-year detour.
+          No lectures. No 4-year detour. Hover a star to peek inside.
         </motion.p>
       </section>
 
