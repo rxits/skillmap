@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { TRACKS, NODES } from "@/lib/content";
+import SoundToggle from "@/components/SoundToggle";
 
 const STEPS = [
   { n: "01", emoji: "⭐", t: "Pick a star", d: "Every concept is a node on a map you can see end to end." },
@@ -21,12 +22,15 @@ export default function Landing() {
           <span className="text-signal text-2xl">✦</span>
           <span className="font-display text-2xl tracking-tight">SkillMap</span>
         </div>
-        <Link
-          href="/learn/ai-engineering"
-          className="font-mono text-xs px-5 py-2.5 rounded-full border border-white/15 text-white/70 hover:border-signal/50 hover:text-signal hover:scale-105 transition"
-        >
-          start learning →
-        </Link>
+        <div className="flex items-center gap-3">
+          <SoundToggle />
+          <Link
+            href="/learn/ai-engineering"
+            className="font-mono text-xs px-5 py-2.5 rounded-full border border-white/15 text-white/70 hover:border-signal/50 hover:text-signal hover:scale-105 transition"
+          >
+            start learning →
+          </Link>
+        </div>
       </header>
 
       {/* hero */}

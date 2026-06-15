@@ -7,6 +7,8 @@ import MapCanvas from "@/components/MapCanvas";
 import NodePanel from "@/components/NodePanel";
 import Tutor from "@/components/Tutor";
 import Confetti from "@/components/Confetti";
+import SoundToggle from "@/components/SoundToggle";
+import { initSound, playClick, playMaster, playLevel } from "@/lib/sound";
 import { NODE_BY_ID, TRACK_BY_ID } from "@/lib/content";
 import {
   loadProgress,
@@ -28,6 +30,12 @@ export default function MapExperience({ trackId }: { trackId: string }) {
   useEffect(() => {
     setMastered(new Set(loadProgress().mastered));
     setHydrated(true);
+    initSound();
+  }, []);
+
+  const select = useCallback((id: string) => {
+    playClick();
+    setActiveId(id);
   }, []);
 
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function MapExperience({ trackId }: { trackId: string }) {
 
   const stateOf = useCallback((id: string) => stateFor(id, mastered), [mastered]);
 
-  function master(id: string, opts?: { celebrate?: boolean }) {
+  function master(id: string, opts?: { celebrate?: boolean; silent?: boolean }) {
     const celebrate = opts?.celebrate !== false;
     const node = NODE_BY_ID[id];
     const gain = node?.parent ? 50 : 100;
@@ -49,10 +57,13 @@ export default function MapExperience({ trackId }: { trackId: string }) {
       next.add(id);
       saveProgress({ mastered: Array.from(next) });
       const after = levelFor(xpFor(next));
-      if (celebrate && after.index > before.index) {
+      const leveledUp = after.index > before.index;
+      if (celebrate && leveledUp) {
         setToast(`Level up! ${after.emoji} You're a ${after.title} now`);
+        playLevel();
       } else if (celebrate) {
         setToast(`+${gain} XP ✦`);
+        if (!opts?.silent) playMaster();
       } else {
         setToast(`+${gain} XP · skipped the challenge`);
       }
@@ -132,6 +143,7 @@ export default function MapExperience({ trackId }: { trackId: string }) {
               <span className="text-white/30">/{TOTAL_AUTHORED}</span>
             </div>
           </div>
+          <SoundToggle />
           {doneCount > 0 && (
             <button
               onClick={reset}
@@ -174,7 +186,7 @@ export default function MapExperience({ trackId }: { trackId: string }) {
       {/* the map */}
       <section className="mt-8 md:mt-10">
         {hydrated && (
-          <MapCanvas stateOf={stateOf} onSelect={setActiveId} activeId={activeId} />
+          <MapCanvas stateOf={stateOf} onSelect={select} activeId={activeId} />
         )}
       </section>
 

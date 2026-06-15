@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { SkillNode, NodeState, RefKind, Challenge } from "@/lib/types";
 import { NODE_BY_ID, childrenOf } from "@/lib/content";
+import { playSolve } from "@/lib/sound";
 import { Visual } from "./visuals";
 
 const REF_ICON: Record<RefKind, string> = {
@@ -30,7 +31,7 @@ export default function NodePanel({
   node: SkillNode | null;
   state: NodeState;
   onClose: () => void;
-  onMaster: (id: string, opts?: { celebrate?: boolean }) => void;
+  onMaster: (id: string, opts?: { celebrate?: boolean; silent?: boolean }) => void;
   onJump: (id: string) => void;
 }) {
   const [touched, setTouched] = useState(false);
@@ -53,7 +54,8 @@ export default function NodePanel({
     if (solvedRef.current) return;
     solvedRef.current = true;
     setSolved(true);
-    if (node && state !== "mastered") onMaster(node.id, { celebrate: true });
+    playSolve();
+    if (node && state !== "mastered") onMaster(node.id, { celebrate: true, silent: true });
   }, [node, state, onMaster]);
 
   return (
