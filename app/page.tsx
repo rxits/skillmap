@@ -48,7 +48,7 @@ export default function Landing() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="font-display text-6xl md:text-8xl leading-[0.98] tracking-tight"
+          className="font-display text-5xl sm:text-6xl md:text-8xl leading-[0.98] tracking-tight"
         >
           Don't grind theory.
           <br />

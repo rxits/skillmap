@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
+import { ChallengeProps } from "@/lib/types";
+import { useChallenge } from "./useChallenge";
 
 type Chunk = { id: number; label: string; x: number; y: number };
 
@@ -15,7 +17,7 @@ const CHUNKS: Chunk[] = [
   { id: 7, label: "API limits", x: 86, y: 38 },
 ];
 
-export default function RetrievalRank() {
+export default function RetrievalRank(props: ChallengeProps) {
   const [query, setQuery] = useState({ x: 50, y: 50 });
   const [k, setK] = useState(3);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -26,6 +28,10 @@ export default function RetrievalRank() {
   }, [query]);
 
   const topK = new Set(ranked.slice(0, k).map((r) => r.c.id));
+
+  const top1Target = props.challenge?.target.top1 as string | undefined;
+  const solved = top1Target !== undefined && ranked[0]?.c.label === top1Target;
+  useChallenge(props, solved, `#1: ${ranked[0]?.c.label ?? "—"}`);
 
   function place(e: React.MouseEvent) {
     const svg = svgRef.current;

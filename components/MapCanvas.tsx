@@ -23,7 +23,7 @@ export default function MapCanvas({
   const [hover, setHover] = useState<string | null>(null);
 
   return (
-    <div className="relative w-full aspect-[16/10] max-w-5xl mx-auto">
+    <div className="relative w-full aspect-[5/6] sm:aspect-[16/10] max-w-5xl mx-auto">
       {/* edges */}
       <svg
         viewBox="0 0 100 62.5"
@@ -84,7 +84,7 @@ export default function MapCanvas({
               y: { duration: 5 + (idx % 4), repeat: Infinity, ease: "easeInOut" },
             }}
             style={{ left: `${n.x}%`, top: `${n.y}%` }}
-            className={`absolute -translate-x-1/2 -translate-y-1/2 group ${
+            className={`absolute -translate-x-1/2 -translate-y-1/2 p-2 group ${
               clickable ? "cursor-pointer" : "cursor-not-allowed"
             }`}
           >
@@ -119,7 +119,7 @@ export default function MapCanvas({
 
             {/* label */}
             <span
-              className={`absolute left-1/2 -translate-x-1/2 top-[calc(100%+8px)] whitespace-nowrap font-mono text-[13px] tracking-wide transition ${
+              className={`absolute left-1/2 -translate-x-1/2 top-[calc(100%+2px)] whitespace-nowrap font-mono text-[10px] sm:text-[13px] tracking-wide transition ${
                 st === "locked"
                   ? "text-white/35"
                   : isActive
@@ -139,7 +139,7 @@ export default function MapCanvas({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.15 }}
-                  className={`absolute left-1/2 -translate-x-1/2 z-30 w-56 text-left rounded-2xl border bg-ink-800/95 backdrop-blur-xl p-4 shadow-2xl ${
+                  className={`absolute left-1/2 -translate-x-1/2 z-30 w-[min(14rem,80vw)] text-left rounded-2xl border bg-ink-800/95 backdrop-blur-xl p-4 shadow-2xl ${
                     cardBelow ? "top-[calc(100%+34px)]" : "bottom-[calc(100%+16px)]"
                   }`}
                   style={{ borderColor: `${c}66` }}

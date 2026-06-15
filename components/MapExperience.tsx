@@ -38,23 +38,27 @@ export default function MapExperience({ trackId }: { trackId: string }) {
 
   const stateOf = useCallback((id: string) => stateFor(id, mastered), [mastered]);
 
-  function master(id: string) {
+  function master(id: string, opts?: { celebrate?: boolean }) {
+    const celebrate = opts?.celebrate !== false;
     const node = NODE_BY_ID[id];
     const gain = node?.parent ? 50 : 100;
     const before = levelFor(xpFor(mastered));
     setMastered((prev) => {
+      if (prev.has(id)) return prev;
       const next = new Set(prev);
       next.add(id);
       saveProgress({ mastered: Array.from(next) });
       const after = levelFor(xpFor(next));
-      if (after.index > before.index) {
+      if (celebrate && after.index > before.index) {
         setToast(`Level up! ${after.emoji} You're a ${after.title} now`);
-      } else {
+      } else if (celebrate) {
         setToast(`+${gain} XP ✦`);
+      } else {
+        setToast(`+${gain} XP · skipped the challenge`);
       }
       return next;
     });
-    setConfetti((c) => c + 1);
+    if (celebrate) setConfetti((c) => c + 1);
   }
 
   function reset() {

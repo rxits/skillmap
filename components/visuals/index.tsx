@@ -1,6 +1,6 @@
 "use client";
 
-import { VisualKind } from "@/lib/types";
+import { VisualKind, ChallengeProps } from "@/lib/types";
 import TokenStream from "./TokenStream";
 import VectorSpace from "./VectorSpace";
 import RetrievalRank from "./RetrievalRank";
@@ -10,7 +10,7 @@ import ChunkingViz from "./ChunkingViz";
 import Reranking from "./Reranking";
 import HybridSearch from "./HybridSearch";
 
-const REGISTRY: Record<VisualKind, () => JSX.Element> = {
+const REGISTRY: Record<VisualKind, (p: ChallengeProps) => JSX.Element> = {
   "token-stream": TokenStream,
   "vector-space": VectorSpace,
   "retrieval-rank": RetrievalRank,
@@ -22,7 +22,7 @@ const REGISTRY: Record<VisualKind, () => JSX.Element> = {
   none: () => <div className="text-white/30 text-sm">Coming soon.</div>,
 };
 
-export function Visual({ kind }: { kind: VisualKind }) {
+export function Visual({ kind, ...challenge }: { kind: VisualKind } & ChallengeProps) {
   const Component = REGISTRY[kind] ?? REGISTRY.none;
-  return <Component />;
+  return <Component {...challenge} />;
 }

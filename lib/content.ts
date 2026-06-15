@@ -115,6 +115,12 @@ export const NODES: SkillNode[] = [
         "Pick a word. Watch where it lands and which words are its nearest neighbors in meaning-space.",
       done: "Similar meaning = nearby points. That's the foundation of search and RAG.",
     },
+    challenge: {
+      goal: "Select the word whose closest neighbor in meaning-space is 'puppy'.",
+      hint: "Which single word means almost the same as a small dog? Pick it and check its #1 neighbor.",
+      solved: "Right — 'dog' lands right next to 'puppy'. That nearness IS the embedding doing its job.",
+      target: { nearestIs: "puppy" },
+    },
     mission: {
       task: "Embed 10 sentences, then find the two most similar to each other using cosine similarity.",
       level: "warm-up",
@@ -148,6 +154,12 @@ export const NODES: SkillNode[] = [
       prompt:
         "Drop a query into the space and pull back the top-k nearest chunks. Change k — watch the net widen.",
       done: "Nearest-neighbor search in action — the engine under every RAG system.",
+    },
+    challenge: {
+      goal: "Move your query so 'refund policy' is the #1 nearest chunk.",
+      hint: "Click right on top of the 'refund policy' point — closest wins rank #1.",
+      solved: "Bullseye — your query landed nearest the refund chunk. That's retrieval.",
+      target: { top1: "refund policy" },
     },
     mission: {
       task: "Stash 100 embeddings in a vector DB and pull back the 5 nearest to a query you write.",
@@ -264,6 +276,12 @@ export const CHILD_NODES: SkillNode[] = [
         "Switch between fixed-size and by-sentence splitting, and drag the chunk size. Watch the same doc become a different set of searchable units.",
       done: "You felt the trade-off: chunk boundaries shape everything downstream.",
     },
+    challenge: {
+      goal: "Split the doc into exactly 4 chunks.",
+      hint: "Use fixed-size and drag the slider — bigger chunks mean fewer of them.",
+      solved: "Exactly 4 searchable units. You just made the call that shapes every retrieval.",
+      target: { chunks: 4 },
+    },
     mission: {
       task: "Chunk one long doc three ways (fixed, sentence, paragraph) and eyeball which one retrieves best.",
       level: "warm-up",
@@ -323,6 +341,12 @@ export const CHILD_NODES: SkillNode[] = [
       prompt:
         "Toggle keyword-only, semantic-only, and hybrid for the same query — watch what each mode misses.",
       done: "You saw why production search is almost always hybrid.",
+    },
+    challenge: {
+      goal: "Surface the 'Apple Silicon sips power' doc in the top 3 — the one keyword search is blind to.",
+      hint: "It shares zero exact words with the query, only meaning. Try the mode that searches by meaning.",
+      solved: "Nailed it — that paraphrased doc only appears once meaning is in play. Keyword-only never sees it.",
+      target: { retrieves: "Apple Silicon" },
     },
     mission: {
       task: "Build a search that fuses BM25 + vectors and beats either one alone on your own docs.",

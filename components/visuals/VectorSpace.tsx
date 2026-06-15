@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { ChallengeProps } from "@/lib/types";
+import { useChallenge } from "./useChallenge";
 
 type Word = { w: string; x: number; y: number; group: string };
 
@@ -24,7 +26,7 @@ function dist(a: Word, b: Word) {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-export default function VectorSpace() {
+export default function VectorSpace(props: ChallengeProps) {
   const [sel, setSel] = useState<string>("king");
   const selected = WORDS.find((w) => w.w === sel)!;
 
@@ -36,6 +38,10 @@ export default function VectorSpace() {
   }, [sel, selected]);
 
   const nearIds = new Set(neighbors.map((n) => n.w.w));
+
+  const nearestTarget = props.challenge?.target.nearestIs as string | undefined;
+  const solved = nearestTarget !== undefined && neighbors[0]?.w.w === nearestTarget;
+  useChallenge(props, solved, `nearest: ${neighbors[0]?.w.w ?? "—"}`);
 
   return (
     <div className="w-full">

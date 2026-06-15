@@ -1,8 +1,8 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
-import { SkillNode, NodeState, RefKind } from "@/lib/types";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { SkillNode, NodeState, RefKind, Challenge } from "@/lib/types";
 import { NODE_BY_ID, childrenOf } from "@/lib/content";
 import { Visual } from "./visuals";
 
@@ -30,16 +30,31 @@ export default function NodePanel({
   node: SkillNode | null;
   state: NodeState;
   onClose: () => void;
-  onMaster: (id: string) => void;
+  onMaster: (id: string, opts?: { celebrate?: boolean }) => void;
   onJump: (id: string) => void;
 }) {
   const [touched, setTouched] = useState(false);
   const [nerd, setNerd] = useState(false);
+  const [solved, setSolved] = useState(false);
+  const [status, setStatus] = useState("");
+  const [showHint, setShowHint] = useState(false);
+  const solvedRef = useRef(false);
 
   useEffect(() => {
     setTouched(false);
     setNerd(false);
+    setSolved(false);
+    setStatus("");
+    setShowHint(false);
+    solvedRef.current = false;
   }, [node?.id]);
+
+  const handleSolved = useCallback(() => {
+    if (solvedRef.current) return;
+    solvedRef.current = true;
+    setSolved(true);
+    if (node && state !== "mastered") onMaster(node.id, { celebrate: true });
+  }, [node, state, onMaster]);
 
   return (
     <AnimatePresence>
@@ -99,21 +114,39 @@ export default function NodePanel({
                 </p>
               </div>
 
-              {/* play with it */}
+              {/* the challenge / play with it */}
               <div className="mt-7">
-                <div className="kicker text-white/35 mb-3">🎮 play with it</div>
+                {node.challenge ? (
+                  <ChallengeBar
+                    challenge={node.challenge}
+                    status={status}
+                    solved={solved || state === "mastered"}
+                    showHint={showHint}
+                    onToggleHint={() => setShowHint((h) => !h)}
+                  />
+                ) : (
+                  <div className="kicker text-white/35 mb-3">🎮 play with it</div>
+                )}
                 <div
+                  key={node.id}
                   onPointerDown={() => setTouched(true)}
                   onClick={() => setTouched(true)}
                   className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 md:p-5"
                 >
-                  <Visual kind={node.visual} />
+                  <Visual
+                    kind={node.visual}
+                    challenge={node.challenge}
+                    onStatus={setStatus}
+                    onSolved={handleSolved}
+                  />
                 </div>
               </div>
 
-              <div className="mt-4 rounded-xl bg-signal/[0.07] border border-signal/20 px-4 py-3.5">
-                <p className="text-base text-white/80 leading-relaxed">{node.build.prompt}</p>
-              </div>
+              {!node.challenge && (
+                <div className="mt-4 rounded-xl bg-signal/[0.07] border border-signal/20 px-4 py-3.5">
+                  <p className="text-base text-white/80 leading-relaxed">{node.build.prompt}</p>
+                </div>
+              )}
 
               {/* watch — embedded video */}
               {node.video && (
@@ -303,8 +336,20 @@ export default function NodePanel({
               <div className="mt-8 pt-6 border-t border-white/10">
                 {state === "mastered" ? (
                   <div className="flex items-center gap-2 text-mastered text-sm font-mono">
-                    ✓ {node.build.done}
+                    ✓ {node.challenge && solved ? node.challenge.solved : node.build.done}
                   </div>
+                ) : node.challenge ? (
+                  <>
+                    <div className="w-full rounded-xl border border-white/10 bg-white/[0.04] py-3.5 text-center text-sm font-mono text-white/45">
+                      ↑ solve the challenge to light it up
+                    </div>
+                    <button
+                      onClick={() => onMaster(node.id, { celebrate: false })}
+                      className="mt-2.5 mx-auto block font-mono text-[11px] text-white/30 hover:text-white/65 transition"
+                    >
+                      skip — I&apos;m just exploring →
+                    </button>
+                  </>
                 ) : (
                   <>
                     <button
@@ -325,5 +370,79 @@ export default function NodePanel({
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function ChallengeBar({
+  challenge,
+  status,
+  solved,
+  showHint,
+  onToggleHint,
+}: {
+  challenge: Challenge;
+  status: string;
+  solved: boolean;
+  showHint: boolean;
+  onToggleHint: () => void;
+}) {
+  return (
+    <motion.div
+      animate={{
+        borderColor: solved ? "rgba(94,224,200,0.5)" : "rgba(245,185,77,0.32)",
+        backgroundColor: solved ? "rgba(94,224,200,0.08)" : "rgba(245,185,77,0.06)",
+      }}
+      className="mb-3 rounded-2xl border p-4"
+    >
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <span
+          className="kicker font-semibold"
+          style={{ color: solved ? "#5ee0c8" : "#f5b94d" }}
+        >
+          {solved ? "✓ solved" : "🎯 challenge"}
+        </span>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={status}
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            transition={{ duration: 0.18 }}
+            className={`font-mono text-[11px] px-2.5 py-1 rounded-full border whitespace-nowrap ${
+              solved
+                ? "text-mastered border-mastered/40 bg-mastered/10"
+                : "text-white/65 border-white/15 bg-white/5"
+            }`}
+          >
+            {status || "make a move…"}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <p className="font-display text-lg md:text-xl leading-snug text-white/90">
+        {solved ? challenge.solved : challenge.goal}
+      </p>
+      {challenge.hint && !solved && (
+        <div className="mt-2">
+          <button
+            onClick={onToggleHint}
+            className="font-mono text-[11px] text-white/40 hover:text-white/70 transition"
+          >
+            {showHint ? "× hide hint" : "stuck? show hint"}
+          </button>
+          <AnimatePresence initial={false}>
+            {showHint && (
+              <motion.p
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden text-sm text-white/55 leading-relaxed mt-1.5"
+              >
+                💡 {challenge.hint}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </motion.div>
   );
 }

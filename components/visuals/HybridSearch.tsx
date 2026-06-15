@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { ChallengeProps } from "@/lib/types";
+import { useChallenge } from "./useChallenge";
 
 type Doc = { id: number; text: string; kw: number; sem: number };
 
@@ -50,7 +52,7 @@ const MISS_NOTE: Record<Mode, JSX.Element> = {
   ),
 };
 
-export default function HybridSearch() {
+export default function HybridSearch(props: ChallengeProps) {
   const [mode, setMode] = useState<Mode>("hybrid");
 
   const ranked = useMemo(() => {
@@ -58,6 +60,11 @@ export default function HybridSearch() {
   }, [mode]);
 
   const topIds = new Set(ranked.slice(0, 3).map((r) => r.d.id));
+
+  const needle = props.challenge?.target.retrieves as string | undefined;
+  const wanted = needle ? DOCS.find((d) => d.text.includes(needle)) : undefined;
+  const found = !!wanted && topIds.has(wanted.id);
+  useChallenge(props, !!needle && found, found ? `${mode} · in top 3 ✓` : `${mode} · missed it`);
 
   return (
     <div className="w-full">

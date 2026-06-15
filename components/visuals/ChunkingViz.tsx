@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { ChallengeProps } from "@/lib/types";
+import { useChallenge } from "./useChallenge";
 
 const DOC =
   "Acme Corp was founded in 2019 to help small teams ship software faster. " +
@@ -35,11 +37,19 @@ function chunk(strategy: Strategy, size: number): string[] {
   return out;
 }
 
-export default function ChunkingViz() {
+export default function ChunkingViz(props: ChallengeProps) {
   const [strategy, setStrategy] = useState<Strategy>("fixed");
   const [size, setSize] = useState(8);
 
   const chunks = useMemo(() => chunk(strategy, size), [strategy, size]);
+
+  const target = props.challenge?.target.chunks as number | undefined;
+  const solved = target !== undefined && chunks.length === target;
+  useChallenge(
+    props,
+    solved,
+    target !== undefined ? `${chunks.length} / ${target} chunks` : `${chunks.length} chunks`
+  );
 
   return (
     <div className="w-full">

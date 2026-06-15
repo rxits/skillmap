@@ -42,6 +42,31 @@ export interface BuildStep {
   done: string;
 }
 
+/**
+ * A real "do the thing" challenge. The learner manipulates the node's visual
+ * until it reaches `target`; the visual reports state and auto-solves. Challenges
+ * are pure data — each visual knows how to read its own `target` keys.
+ */
+export interface Challenge {
+  /** the goal shown above the visual, e.g. "Split the doc into exactly 4 chunks" */
+  goal: string;
+  /** optional nudge, revealed on demand */
+  hint?: string;
+  /** celebratory line shown once solved */
+  solved: string;
+  /** visual-specific target params, interpreted by the matching visual */
+  target: Record<string, number | string | boolean>;
+}
+
+/** Props every interactive visual optionally accepts to run a challenge. */
+export interface ChallengeProps {
+  challenge?: Challenge;
+  /** fired ONCE, the first time the target is met */
+  onSolved?: () => void;
+  /** live progress text, e.g. "3 / 4 chunks" */
+  onStatus?: (status: string) => void;
+}
+
 export interface MapLink {
   /** id of a related node, rendered as a clickable chip in "map-in" */
   to: string;
@@ -70,6 +95,8 @@ export interface SkillNode {
   related: MapLink[];
   /** the in-visual build challenge */
   build: BuildStep;
+  /** optional "do the thing" challenge that gates mastery; absent = v1 touch-gate */
+  challenge?: Challenge;
   /** a real-world build assignment with starter repos */
   mission?: Mission;
   /** curated "go learn more" links */
