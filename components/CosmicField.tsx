@@ -5,10 +5,11 @@ import { useEffect, useRef } from "react";
 /**
  * A living deep-space canvas: parallax star layers that react to the cursor,
  * slow drift so it breathes on its own, twinkle, and the occasional comet.
- * Pure canvas, no deps, DPR-aware, and honors prefers-reduced-motion.
  *
- * The CSS aurora + grain layers stay behind/above this for color wash + texture;
- * this owns the stars and the depth.
+ * Perf: glow halos are pre-rendered to sprite canvases ONCE and blitted with
+ * drawImage (no per-frame gradient allocation). DPR capped at 2, star count
+ * capped by area, the loop pauses when the tab is hidden, and reduced-motion
+ * renders a single static frame.
  */
 
 type Star = {
@@ -16,28 +17,21 @@ type Star = {
   y: number;
   z: number; // depth 0.15 (far) .. 1 (near)
   r: number; // base radius
-  hue: string;
+  tint: number; // index into TINTS
   twSpeed: number;
   twPhase: number;
 };
 
-type Comet = {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number; // 0..1 remaining
-  len: number;
-};
+type Comet = { x: number; y: number; vx: number; vy: number; life: number; len: number };
 
-const STAR_TINTS = [
-  "255,255,255",
-  "255,255,255",
-  "255,255,255",
-  "200,224,255", // cool blue-white
-  "255,228,178", // warm amber-white
-  "176,240,228", // cyan
-  "210,200,255", // faint violet
+const TINTS = [
+  [255, 255, 255],
+  [255, 255, 255],
+  [255, 255, 255],
+  [200, 224, 255], // cool blue-white
+  [255, 228, 178], // warm amber-white
+  [176, 240, 228], // cyan
+  [210, 200, 255], // faint violet
 ];
 
 export default function CosmicField() {
@@ -55,9 +49,23 @@ export default function CosmicField() {
     let H = 0;
     let dpr = Math.min(window.devicePixelRatio || 1, 2);
     let stars: Star[] = [];
-    let comets: Comet[] = [];
+    const comets: Comet[] = [];
 
-    // cursor parallax target + smoothed value
+    // Pre-rendered glow sprites, one per tint — built once, blitted every frame.
+    const sprites: HTMLCanvasElement[] = TINTS.map(([r, g, b]) => {
+      const s = document.createElement("canvas");
+      s.width = s.height = 48;
+      const sc = s.getContext("2d")!;
+      const grad = sc.createRadialGradient(24, 24, 0, 24, 24, 24);
+      grad.addColorStop(0, `rgba(${r},${g},${b},0.9)`);
+      grad.addColorStop(0.4, `rgba(${r},${g},${b},0.25)`);
+      grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      sc.fillStyle = grad;
+      sc.fillRect(0, 0, 48, 48);
+      return s;
+    });
+    const whiteGlow = sprites[0];
+
     const target = { x: 0, y: 0 };
     const cur = { x: 0, y: 0 };
 
@@ -69,16 +77,15 @@ export default function CosmicField() {
       canvas!.height = Math.floor(H * dpr);
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-      // density scales with area, capped for perf
-      const count = Math.min(620, Math.floor((W * H) / 2600));
+      const count = Math.min(560, Math.floor((W * H) / 2900));
       stars = new Array(count).fill(0).map(() => {
-        const z = Math.pow(Math.random(), 1.6) * 0.85 + 0.15; // bias toward far
+        const z = Math.pow(Math.random(), 1.6) * 0.85 + 0.15;
         return {
           x: Math.random(),
           y: Math.random(),
           z,
           r: 0.3 + z * 1.7,
-          hue: STAR_TINTS[(Math.random() * STAR_TINTS.length) | 0],
+          tint: (Math.random() * TINTS.length) | 0,
           twSpeed: 0.6 + Math.random() * 1.8,
           twPhase: Math.random() * Math.PI * 2,
         };
@@ -86,72 +93,59 @@ export default function CosmicField() {
     }
 
     function spawnComet() {
-      // enter from a random edge-ish point, shoot across
       const fromLeft = Math.random() > 0.5;
       const x = fromLeft ? -0.05 : Math.random() * 0.6;
       const y = Math.random() * 0.5;
       const speed = 0.55 + Math.random() * 0.4;
-      const angle = (fromLeft ? 0.18 : 0.32) + Math.random() * 0.12; // gentle downward
-      comets.push({
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 1,
-        len: 0.08 + Math.random() * 0.08,
-      });
+      const angle = (fromLeft ? 0.18 : 0.32) + Math.random() * 0.12;
+      comets.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, life: 1, len: 0.08 + Math.random() * 0.08 });
     }
 
     let raf = 0;
     let t = 0;
     let last = performance.now();
     let cometTimer = 2 + Math.random() * 4;
+    let running = false;
 
     function frame(now: number) {
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       t += dt;
 
-      // ease cursor parallax
       cur.x += (target.x - cur.x) * 0.05;
       cur.y += (target.y - cur.y) * 0.05;
 
       ctx!.clearRect(0, 0, W, H);
+      ctx!.globalCompositeOperation = "lighter";
 
-      // slow autonomous drift so it lives without a mouse
       const driftX = Math.sin(t * 0.06) * 14;
       const driftY = Math.cos(t * 0.05) * 10;
 
-      ctx!.globalCompositeOperation = "lighter";
       for (let i = 0; i < stars.length; i++) {
         const s = stars[i];
         const px = cur.x * s.z * 42 + driftX * s.z;
         const py = cur.y * s.z * 42 + driftY * s.z;
         const x = s.x * W + px;
         const y = s.y * H + py;
-        if (x < -4 || x > W + 4 || y < -4 || y > H + 4) continue;
+        if (x < -8 || x > W + 8 || y < -8 || y > H + 8) continue;
 
         const tw = reduce ? 0.85 : 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * s.twSpeed + s.twPhase));
         const a = (0.35 + s.z * 0.6) * tw;
-        const r = s.r;
 
-        // soft glow for the brighter/near stars
-        if (s.z > 0.62) {
-          const g = ctx!.createRadialGradient(x, y, 0, x, y, r * 5);
-          g.addColorStop(0, `rgba(${s.hue},${a * 0.5})`);
-          g.addColorStop(1, `rgba(${s.hue},0)`);
-          ctx!.fillStyle = g;
-          ctx!.beginPath();
-          ctx!.arc(x, y, r * 5, 0, Math.PI * 2);
-          ctx!.fill();
+        if (s.z > 0.55) {
+          const R = s.r * 5;
+          ctx!.globalAlpha = a * 0.6;
+          ctx!.drawImage(sprites[s.tint], x - R, y - R, R * 2, R * 2);
         }
-        ctx!.fillStyle = `rgba(${s.hue},${a})`;
+        ctx!.globalAlpha = a;
+        const [r, g, b] = TINTS[s.tint];
+        ctx!.fillStyle = `rgb(${r},${g},${b})`;
         ctx!.beginPath();
-        ctx!.arc(x, y, r, 0, Math.PI * 2);
+        ctx!.arc(x, y, s.r, 0, Math.PI * 2);
         ctx!.fill();
       }
+      ctx!.globalAlpha = 1;
 
-      // comets
       if (!reduce) {
         cometTimer -= dt;
         if (cometTimer <= 0 && comets.length < 2) {
@@ -181,19 +175,26 @@ export default function CosmicField() {
           ctx!.moveTo(tx, ty);
           ctx!.lineTo(hx, hy);
           ctx!.stroke();
-          // head glow
-          const hg = ctx!.createRadialGradient(hx, hy, 0, hx, hy, 6);
-          hg.addColorStop(0, `rgba(235,245,255,${0.9 * c.life})`);
-          hg.addColorStop(1, "rgba(235,245,255,0)");
-          ctx!.fillStyle = hg;
-          ctx!.beginPath();
-          ctx!.arc(hx, hy, 6, 0, Math.PI * 2);
-          ctx!.fill();
+          const R = 7;
+          ctx!.globalAlpha = 0.9 * c.life;
+          ctx!.drawImage(whiteGlow, hx - R, hy - R, R * 2, R * 2);
+          ctx!.globalAlpha = 1;
         }
       }
       ctx!.globalCompositeOperation = "source-over";
 
-      if (!reduce) raf = requestAnimationFrame(frame);
+      if (!reduce && running) raf = requestAnimationFrame(frame);
+    }
+
+    function start() {
+      if (running || reduce) return;
+      running = true;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    }
+    function stop() {
+      running = false;
+      cancelAnimationFrame(raf);
     }
 
     function onMove(e: PointerEvent) {
@@ -202,30 +203,30 @@ export default function CosmicField() {
     }
     function onResize() {
       build();
-      if (reduce) {
-        last = performance.now();
-        frame(last);
-      }
+      if (reduce) frame(performance.now());
+    }
+    function onVisibility() {
+      if (document.hidden) stop();
+      else start();
     }
 
     build();
-    last = performance.now();
-    frame(last);
-    if (!reduce) window.addEventListener("pointermove", onMove, { passive: true });
+    if (reduce) {
+      frame(performance.now());
+    } else {
+      start();
+      window.addEventListener("pointermove", onMove, { passive: true });
+      document.addEventListener("visibilitychange", onVisibility);
+    }
     window.addEventListener("resize", onResize);
 
     return () => {
-      cancelAnimationFrame(raf);
+      stop();
       window.removeEventListener("pointermove", onMove);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", onResize);
     };
   }, []);
 
-  return (
-    <canvas
-      ref={ref}
-      aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 h-full w-full"
-    />
-  );
+  return <canvas ref={ref} aria-hidden className="pointer-events-none fixed inset-0 z-0 h-full w-full" />;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import MapCanvas from "@/components/MapCanvas";
@@ -26,11 +26,20 @@ export default function MapExperience({ trackId }: { trackId: string }) {
   const [hydrated, setHydrated] = useState(false);
   const [confetti, setConfetti] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [burst, setBurst] = useState<{ id: string; n: number } | null>(null);
+  const [showIntro, setShowIntro] = useState(false);
+  const burstN = useRef(0);
 
   useEffect(() => {
     setMastered(new Set(loadProgress().mastered));
     setHydrated(true);
     initSound();
+    if (typeof window !== "undefined" && !sessionStorage.getItem("skillmap.intro.v1")) {
+      setShowIntro(true);
+      sessionStorage.setItem("skillmap.intro.v1", "1");
+      const t = setTimeout(() => setShowIntro(false), 2200);
+      return () => clearTimeout(t);
+    }
   }, []);
 
   const select = useCallback((id: string) => {
@@ -69,7 +78,11 @@ export default function MapExperience({ trackId }: { trackId: string }) {
       }
       return next;
     });
-    if (celebrate) setConfetti((c) => c + 1);
+    if (celebrate) {
+      setConfetti((c) => c + 1);
+      burstN.current += 1;
+      setBurst({ id, n: burstN.current });
+    }
   }
 
   function reset() {
@@ -93,6 +106,39 @@ export default function MapExperience({ trackId }: { trackId: string }) {
   return (
     <main className="relative z-10 min-h-dvh px-5 md:px-10 pb-24">
       <Confetti trigger={confetti} />
+
+      {/* cinematic warp-in — once per session */}
+      <AnimatePresence>
+        {showIntro && (
+          <motion.div
+            key="warp-intro"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.9, ease: "easeInOut" }}
+            onClick={() => setShowIntro(false)}
+            className="fixed inset-0 z-[80] flex items-center justify-center cursor-pointer"
+            style={{ background: "radial-gradient(120% 100% at 50% 50%, #0a0e1c 35%, #04060f 100%)" }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.82 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.1, ease: "easeOut" }}
+              className="text-center px-6"
+            >
+              <div className="kicker text-signal/80 mb-4">⟢ entering</div>
+              <div className="font-display text-4xl md:text-7xl leading-[1.02] shimmer-text">
+                {track ? track.name : "the galaxy"}
+              </div>
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.4, duration: 1.1 }}
+                className="mx-auto mt-6 h-px w-40 bg-gradient-to-r from-transparent via-signal to-transparent"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* xp / level-up toast */}
       <AnimatePresence>
@@ -186,7 +232,7 @@ export default function MapExperience({ trackId }: { trackId: string }) {
       {/* the map */}
       <section className="mt-8 md:mt-10">
         {hydrated && (
-          <MapCanvas stateOf={stateOf} onSelect={select} activeId={activeId} />
+          <MapCanvas stateOf={stateOf} onSelect={select} activeId={activeId} burst={burst} />
         )}
       </section>
 

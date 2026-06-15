@@ -70,6 +70,28 @@ body {
   background: radial-gradient(120% 100% at 50% 42%, transparent 52%, rgba(3, 5, 12, 0.55) 100%);
 }
 
+/* Cursor aura: a soft glow that lifts nearby stars. Transform-driven from JS. */
+.cursor-aura {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  border-radius: 50%;
+  z-index: 0;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+  background: radial-gradient(
+    circle,
+    rgba(245, 185, 77, 0.1),
+    rgba(94, 224, 200, 0.05) 38%,
+    transparent 68%
+  );
+}
+
 /* Film grain overlay for texture. */
 .bg-grain {
   z-index: 1;

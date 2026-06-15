@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CosmicField from "@/components/CosmicField";
+import CursorAura from "@/components/CursorAura";
 
 export const metadata: Metadata = {
   title: "SkillMap — the map of AI engineering",
@@ -27,6 +28,7 @@ export default function RootLayout({
         <div className="bg-layer bg-base" />
         <div className="bg-layer bg-aurora" />
         <CosmicField />
+        <CursorAura />
         <div className="bg-layer bg-vignette" />
         <div className="bg-layer bg-grain" />
         {children}

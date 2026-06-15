@@ -15,13 +15,17 @@ export default function MapCanvas({
   stateOf,
   onSelect,
   activeId,
+  burst,
 }: {
   stateOf: (id: string) => NodeState;
   onSelect: (id: string) => void;
   activeId: string | null;
+  burst?: { id: string; n: number } | null;
 }) {
   const [hover, setHover] = useState<string | null>(null);
   const anyActive = activeId !== null;
+  const burstNode = burst ? NODE_BY_ID[burst.id] : null;
+  const burstColor = burstNode?.accent ?? "#5ee0c8";
 
   return (
     <div className="relative w-full aspect-[5/6] sm:aspect-[16/10] max-w-5xl mx-auto">
@@ -91,6 +95,26 @@ export default function MapCanvas({
             );
           })}
         </svg>
+
+        {/* master shockwave — twin rings blast out from the lit star */}
+        {burstNode && (
+          <div
+            key={burst!.n}
+            className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            style={{ left: `${burstNode.x}%`, top: `${burstNode.y}%` }}
+          >
+            {[0, 0.18].map((delay, k) => (
+              <motion.span
+                key={k}
+                initial={{ opacity: 0.65, scale: 0 }}
+                animate={{ opacity: 0, scale: 1 }}
+                transition={{ duration: 1.2, delay, ease: "easeOut" }}
+                className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{ width: 230, height: 230, border: `2px solid ${burstColor}` }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* nodes */}
         {NODES.map((n, idx) => {
